@@ -2778,23 +2778,41 @@
         addNewObstacle: function (currentSpeed) {
             var obstacleTypeIndex;
             if (gameSettings.useCustom) {
-                var roll = getRandomNum(0, 99);
-                var pteroCutoff = gameSettings.pteroPct;
-                var smallCutoff = pteroCutoff + gameSettings.smallCactusPct;
-                if (roll < pteroCutoff) {
-                    obstacleTypeIndex = 2; // PTERODACTYL
-                } else if (roll < smallCutoff) {
-                    obstacleTypeIndex = 0; // CACTUS_SMALL
+                // Build weights, zeroing out types that are blocked by minSpeed
+                // or by the duplicate cap — so we never recurse into an infinite loop.
+                var pteroMinSpeed = Obstacle.types[2].minSpeed; // 8.5
+                var h = this.obstacleHistory;
+                var recentlyDuplicated = (h.length >= 2 && h[0] === h[1]) ? h[0] : null;
+
+                var wPtero = (currentSpeed >= pteroMinSpeed &&
+                              recentlyDuplicated !== 'PTERODACTYL')
+                             ? gameSettings.pteroPct : 0;
+                var wSmall = (recentlyDuplicated !== 'CACTUS_SMALL')
+                             ? gameSettings.smallCactusPct : 0;
+                var wLarge = (recentlyDuplicated !== 'CACTUS_LARGE')
+                             ? gameSettings.largeCactusPct : 0;
+                var total = wPtero + wSmall + wLarge;
+
+                if (total === 0) {
+                    // Edge case: every type is blocked — fall back to a random cactus
+                    obstacleTypeIndex = getRandomNum(0, 1);
                 } else {
-                    obstacleTypeIndex = 1; // CACTUS_LARGE
+                    var roll = getRandomNum(0, total - 1);
+                    if (roll < wPtero) {
+                        obstacleTypeIndex = 2; // PTERODACTYL
+                    } else if (roll < wPtero + wSmall) {
+                        obstacleTypeIndex = 0; // CACTUS_SMALL
+                    } else {
+                        obstacleTypeIndex = 1; // CACTUS_LARGE
+                    }
                 }
             } else {
                 obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
             }
             var obstacleType = Obstacle.types[obstacleTypeIndex];
 
-            // Check for multiples of the same type of obstacle.
-            // Also check obstacle is available at current speed.
+            // Only recurse for the duplicate cap (bounded — history has max 2 entries).
+            // minSpeed is already handled above in custom mode.
             if (this.duplicateObstacleCheck(obstacleType.type) ||
                 currentSpeed < obstacleType.minSpeed) {
                 this.addNewObstacle(currentSpeed);
