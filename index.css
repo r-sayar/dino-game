@@ -1,0 +1,337 @@
+/* Copyright 2013 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file. */
+
+html, body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Settings gear button ── */
+#settings-gear {
+  position: fixed;
+  top: 12px;
+  right: 14px;
+  z-index: 1000;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #535353;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.15s, transform 0.2s;
+}
+#settings-gear:hover {
+  color: #111;
+  transform: rotate(30deg);
+}
+
+/* ── Modal backdrop ── */
+#settings-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#settings-modal.open {
+  display: flex;
+}
+
+/* ── Settings panel ── */
+#settings-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px 28px 20px;
+  width: min(420px, 92vw);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  font-family: 'Open Sans', sans-serif;
+  color: #2b2b2b;
+}
+
+#settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+#settings-header span {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+#settings-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #888;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+#settings-close:hover { color: #333; background: #f0f0f0; }
+
+/* ── Mode radio row ── */
+#mode-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.mode-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 2px solid #ddd;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.mode-label:has(input:checked) {
+  border-color: #1a73e8;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-weight: 600;
+}
+.mode-label input { display: none; }
+
+/* ── Sliders ── */
+#custom-controls {
+  margin-bottom: 4px;
+}
+.setting-row {
+  margin-bottom: 14px;
+}
+.setting-row label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #444;
+}
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.slider-wrap input[type=range] {
+  flex: 1;
+  accent-color: #1a73e8;
+  height: 4px;
+  cursor: pointer;
+}
+.slider-val {
+  min-width: 38px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a73e8;
+}
+.slider-sub {
+  font-size: 11px;
+  color: #999;
+  margin-top: 3px;
+}
+
+/* Large cactus read-only bar */
+.slider-wrap.disabled {
+  opacity: 0.85;
+}
+#large-bar-track {
+  flex: 1;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+#large-bar-fill {
+  height: 100%;
+  background: #1a73e8;
+  width: 33%;
+  transition: width 0.15s;
+}
+
+#pct-warning {
+  font-size: 12px;
+  color: #c62828;
+  margin-bottom: 8px;
+}
+
+/* ── Apply button ── */
+#apply-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+#apply-btn:hover { background: #1557b0; }
+
+.icon {
+  -webkit-user-select: none;
+  user-select: none;
+  display: inline-block;
+}
+
+.icon-offline {
+  content: -webkit-image-set( url(assets/default_100_percent/100-error-offline.png) 1x, url(assets/default_200_percent/200-error-offline.png) 2x);
+  position: relative;
+}
+
+.hidden {
+  display: none;
+}
+
+
+/* Offline page */
+
+.offline .interstitial-wrapper {
+  color: #2b2b2b;
+  font-size: 1em;
+  line-height: 1.55;
+  margin: 0 auto;
+  max-width: 600px;
+  padding-top: 100px;
+  width: 100%;
+}
+
+.offline .runner-container {
+  height: 150px;
+  max-width: 600px;
+  overflow: hidden;
+  position: absolute;
+  top: 35px;
+  width: 44px;
+}
+
+.offline .runner-canvas {
+  height: 150px;
+  max-width: 600px;
+  opacity: 1;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  z-index: 2;
+}
+
+.offline .controller {
+  background: rgba(247, 247, 247, .1);
+  height: 100vh;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  z-index: 1;
+}
+
+#offline-resources {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .suggested-left > #control-buttons, .suggested-right > #control-buttons {
+    float: none;
+  }
+  .snackbar {
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 0;
+  }
+}
+
+@media (max-height: 350px) {
+  h1 {
+    margin: 0 0 15px;
+  }
+  .icon-offline {
+    margin: 0 0 10px;
+  }
+  .interstitial-wrapper {
+    margin-top: 5%;
+  }
+  .nav-wrapper {
+    margin-top: 30px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 736px) and (orientation: landscape) {
+  .offline .interstitial-wrapper {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 420px) and (max-width: 736px) and (min-height: 240px) and (max-height: 420px) and (orientation:landscape) {
+  .interstitial-wrapper {
+    margin-bottom: 100px;
+  }
+}
+
+@media (min-height: 240px) and (orientation: landscape) {
+  .offline .interstitial-wrapper {
+    margin-bottom: 90px;
+  }
+  .icon-offline {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-height: 320px) and (orientation: landscape) {
+  .icon-offline {
+    margin-bottom: 0;
+  }
+  .offline .runner-container {
+    top: 10px;
+  }
+}
+
+@media (max-width: 240px) {
+  .interstitial-wrapper {
+    overflow: inherit;
+    padding: 0 8px;
+  }
+}
+
+.arcade-mode,
+.arcade-mode .runner-container,
+.arcade-mode .runner-canvas {
+  image-rendering: pixelated;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.arcade-mode #buttons,
+.arcade-mode #main-content {
+  opacity: 0;
+  overflow: hidden;
+}
+
+.arcade-mode .interstitial-wrapper {
+  height: 100vh;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.arcade-mode .runner-container {
+  left: 0;
+  margin: auto;
+  right: 0;
+  transform-origin: top center;
+  transition: transform 250ms cubic-bezier(0.4, 0, 1, 1) 400ms;
+  z-index: 2;
+}
