@@ -11,6 +11,74 @@
 </head>
 
 <body id="t" class="offline">
+    <!-- Settings gear button -->
+    <button id="settings-gear" onclick="openSettings()" title="Settings">&#9881;</button>
+
+    <!-- Settings modal -->
+    <div id="settings-modal" onclick="if(event.target===this)closeSettings()">
+        <div id="settings-panel">
+            <div id="settings-header">
+                <span>Settings</span>
+                <button id="settings-close" onclick="closeSettings()">&#10005;</button>
+            </div>
+
+            <div id="mode-row">
+                <label class="mode-label">
+                    <input type="radio" name="mode" id="mode-default" value="default"
+                           checked onchange="onModeChange('default')">
+                    Default
+                </label>
+                <label class="mode-label">
+                    <input type="radio" name="mode" id="mode-custom" value="custom"
+                           onchange="onModeChange('custom')">
+                    Custom
+                </label>
+            </div>
+
+            <div id="custom-controls" style="display:none">
+                <div class="setting-row">
+                    <label>Starting Speed</label>
+                    <div class="slider-wrap">
+                        <input type="range" id="speed-slider" min="4" max="13" step="0.5"
+                               value="6" oninput="updateSliderLabels()">
+                        <span class="slider-val" id="speed-val">6.0</span>
+                    </div>
+                    <div class="slider-sub">Standard: 6 &nbsp;·&nbsp; Ptero appears: 8.5+</div>
+                </div>
+
+                <div class="setting-row">
+                    <label>Pterodactyl (bird) %</label>
+                    <div class="slider-wrap">
+                        <input type="range" id="ptero-slider" min="0" max="100" step="1"
+                               value="33" oninput="updateSliderLabels()">
+                        <span class="slider-val" id="ptero-val">33%</span>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <label>Small Cactus %</label>
+                    <div class="slider-wrap">
+                        <input type="range" id="small-slider" min="0" max="100" step="1"
+                               value="34" oninput="updateSliderLabels()">
+                        <span class="slider-val" id="small-val">34%</span>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <label>Large Cactus %</label>
+                    <div class="slider-wrap disabled">
+                        <div id="large-bar-track"><div id="large-bar-fill"></div></div>
+                        <span class="slider-val" id="large-val">33%</span>
+                    </div>
+                    <div class="slider-sub">Auto = 100 − Ptero − Small Cactus</div>
+                </div>
+
+                <div id="pct-warning" style="display:none">⚠ Percentages exceed 100%. Large Cactus will be 0%.</div>
+            </div>
+
+            <button id="apply-btn" onclick="applySettings()">Apply</button>
+        </div>
+    </div>
     <div id="messageBox" class="sendmessage">
          <h1 style="text-align: center;font-family: 'Open Sans', sans-serif;">Press Space to start</h1>
          <div class="niokbutton" onclick="okbuttonsend()"></div>

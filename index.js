@@ -4,6 +4,103 @@
 // extract from chromium source code by @liuwayong
 (function () {
     'use strict';
+
+    // Game settings (default = standard Chrome dino behaviour)
+    var gameSettings = {
+        useCustom: false,
+        speed: 6,
+        pteroPct: 33,
+        smallCactusPct: 34,
+        largeCactusPct: 33
+    };
+
+    function openSettings() {
+        var modal = document.getElementById('settings-modal');
+        if (!modal) return;
+        // Sync sliders to current settings before opening
+        syncSlidersFromSettings();
+        modal.classList.add('open');
+    }
+
+    function closeSettings() {
+        var modal = document.getElementById('settings-modal');
+        if (modal) modal.classList.remove('open');
+    }
+
+    function syncSlidersFromSettings() {
+        var isCustom = gameSettings.useCustom;
+        document.getElementById('mode-default').checked = !isCustom;
+        document.getElementById('mode-custom').checked = isCustom;
+        document.getElementById('speed-slider').value = gameSettings.speed;
+        document.getElementById('ptero-slider').value = gameSettings.pteroPct;
+        document.getElementById('small-slider').value = gameSettings.smallCactusPct;
+        updateSliderLabels();
+        toggleCustomControls(isCustom);
+    }
+
+    function toggleCustomControls(enabled) {
+        var controls = document.getElementById('custom-controls');
+        if (controls) controls.style.display = enabled ? 'block' : 'none';
+    }
+
+    function updateSliderLabels() {
+        var ptero = parseInt(document.getElementById('ptero-slider').value, 10);
+        var small = parseInt(document.getElementById('small-slider').value, 10);
+        var speed = parseFloat(document.getElementById('speed-slider').value);
+
+        // Clamp small so ptero + small <= 100
+        var maxSmall = 100 - ptero;
+        if (small > maxSmall) {
+            small = maxSmall;
+            document.getElementById('small-slider').value = small;
+        }
+        var large = 100 - ptero - small;
+
+        document.getElementById('speed-val').textContent = speed.toFixed(1);
+        document.getElementById('ptero-val').textContent = ptero + '%';
+        document.getElementById('small-val').textContent = small + '%';
+        document.getElementById('large-val').textContent = large + '%';
+
+        // Drive the read-only large-cactus bar
+        var fill = document.getElementById('large-bar-fill');
+        if (fill) fill.style.width = large + '%';
+
+        // Warning if total > 100 (shouldn't happen with clamping, but guard)
+        var warning = document.getElementById('pct-warning');
+        if (warning) warning.style.display = large < 0 ? 'block' : 'none';
+    }
+
+    function onModeChange(mode) {
+        var isCustom = (mode === 'custom');
+        toggleCustomControls(isCustom);
+    }
+
+    function applySettings() {
+        var isCustom = document.getElementById('mode-custom').checked;
+        gameSettings.useCustom = isCustom;
+        if (isCustom) {
+            gameSettings.speed = parseFloat(document.getElementById('speed-slider').value);
+            var ptero = parseInt(document.getElementById('ptero-slider').value, 10);
+            var small = parseInt(document.getElementById('small-slider').value, 10);
+            var large = 100 - ptero - small;
+            gameSettings.pteroPct = ptero;
+            gameSettings.smallCactusPct = small;
+            gameSettings.largeCactusPct = Math.max(0, large);
+        } else {
+            // Restore defaults
+            gameSettings.speed = 6;
+            gameSettings.pteroPct = 33;
+            gameSettings.smallCactusPct = 34;
+            gameSettings.largeCactusPct = 33;
+        }
+        closeSettings();
+    }
+
+    window.openSettings = openSettings;
+    window.closeSettings = closeSettings;
+    window.updateSliderLabels = updateSliderLabels;
+    window.onModeChange = onModeChange;
+    window.applySettings = applySettings;
     /**
      * T-Rex runner.
      * @param {string} outerContainerId Outer containing element id.
@@ -502,6 +599,9 @@
          * Update the game status to started.
          */
         startGame: function () {
+            if (gameSettings.useCustom) {
+                this.currentSpeed = gameSettings.speed;
+            }
             this.setArcadeMode();
             this.runningTime = 0;
             this.playingIntro = false;
@@ -830,7 +930,7 @@
                 this.playing = true;
                 this.crashed = false;
                 this.distanceRan = 0;
-                this.setSpeed(this.config.SPEED);
+                this.setSpeed(gameSettings.useCustom ? gameSettings.speed : this.config.SPEED);
                 this.time = getTimeStamp();
                 this.containerEl.classList.remove(Runner.classes.CRASHED);
                 this.clearCanvas();
@@ -2676,7 +2776,21 @@
          * @param {number} currentSpeed
          */
         addNewObstacle: function (currentSpeed) {
-            var obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
+            var obstacleTypeIndex;
+            if (gameSettings.useCustom) {
+                var roll = getRandomNum(0, 99);
+                var pteroCutoff = gameSettings.pteroPct;
+                var smallCutoff = pteroCutoff + gameSettings.smallCactusPct;
+                if (roll < pteroCutoff) {
+                    obstacleTypeIndex = 2; // PTERODACTYL
+                } else if (roll < smallCutoff) {
+                    obstacleTypeIndex = 0; // CACTUS_SMALL
+                } else {
+                    obstacleTypeIndex = 1; // CACTUS_LARGE
+                }
+            } else {
+                obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
+            }
             var obstacleType = Obstacle.types[obstacleTypeIndex];
 
             // Check for multiples of the same type of obstacle.

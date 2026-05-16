@@ -9,6 +9,178 @@ html, body {
   height: 100%;
 }
 
+/* ── Settings gear button ── */
+#settings-gear {
+  position: fixed;
+  top: 12px;
+  right: 14px;
+  z-index: 1000;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #535353;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.15s, transform 0.2s;
+}
+#settings-gear:hover {
+  color: #111;
+  transform: rotate(30deg);
+}
+
+/* ── Modal backdrop ── */
+#settings-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#settings-modal.open {
+  display: flex;
+}
+
+/* ── Settings panel ── */
+#settings-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px 28px 20px;
+  width: min(420px, 92vw);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  font-family: 'Open Sans', sans-serif;
+  color: #2b2b2b;
+}
+
+#settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+#settings-header span {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+#settings-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #888;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+#settings-close:hover { color: #333; background: #f0f0f0; }
+
+/* ── Mode radio row ── */
+#mode-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.mode-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 2px solid #ddd;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.mode-label:has(input:checked) {
+  border-color: #1a73e8;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-weight: 600;
+}
+.mode-label input { display: none; }
+
+/* ── Sliders ── */
+#custom-controls {
+  margin-bottom: 4px;
+}
+.setting-row {
+  margin-bottom: 14px;
+}
+.setting-row label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #444;
+}
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.slider-wrap input[type=range] {
+  flex: 1;
+  accent-color: #1a73e8;
+  height: 4px;
+  cursor: pointer;
+}
+.slider-val {
+  min-width: 38px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a73e8;
+}
+.slider-sub {
+  font-size: 11px;
+  color: #999;
+  margin-top: 3px;
+}
+
+/* Large cactus read-only bar */
+.slider-wrap.disabled {
+  opacity: 0.85;
+}
+#large-bar-track {
+  flex: 1;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+#large-bar-fill {
+  height: 100%;
+  background: #1a73e8;
+  width: 33%;
+  transition: width 0.15s;
+}
+
+#pct-warning {
+  font-size: 12px;
+  color: #c62828;
+  margin-bottom: 8px;
+}
+
+/* ── Apply button ── */
+#apply-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+#apply-btn:hover { background: #1557b0; }
+
 .icon {
   -webkit-user-select: none;
   user-select: none;
