@@ -65,9 +65,11 @@
         var fill = document.getElementById('large-bar-fill');
         if (fill) fill.style.width = large + '%';
 
-        // Warning if total > 100 (shouldn't happen with clamping, but guard)
-        var warning = document.getElementById('pct-warning');
-        if (warning) warning.style.display = large < 0 ? 'block' : 'none';
+        // Show speed warning when birds are wanted but speed is too low
+        var speedWarning = document.getElementById('speed-warning');
+        if (speedWarning) {
+            speedWarning.style.display = (ptero > 0 && speed < 8.5) ? 'block' : 'none';
+        }
     }
 
     function onModeChange(mode) {
@@ -2776,57 +2778,49 @@
          * @param {number} currentSpeed
          */
         addNewObstacle: function (currentSpeed) {
-            var obstacleTypeIndex;
+            var obstacleType, obstacleSpritePos;
+
             if (gameSettings.useCustom) {
-                // Build weights, zeroing out types that are blocked by minSpeed
-                // or by the duplicate cap — so we never recurse into an infinite loop.
-                var pteroMinSpeed = Obstacle.types[2].minSpeed; // 8.5
-                var h = this.obstacleHistory;
-                var recentlyDuplicated = (h.length >= 2 && h[0] === h[1]) ? h[0] : null;
-
-                var wPtero = (currentSpeed >= pteroMinSpeed &&
-                              recentlyDuplicated !== 'PTERODACTYL')
-                             ? gameSettings.pteroPct : 0;
-                var wSmall = (recentlyDuplicated !== 'CACTUS_SMALL')
-                             ? gameSettings.smallCactusPct : 0;
-                var wLarge = (recentlyDuplicated !== 'CACTUS_LARGE')
-                             ? gameSettings.largeCactusPct : 0;
-                var total = wPtero + wSmall + wLarge;
-
+                // Custom mode: pick by weighted percentage, no duplicate cap.
+                // Only gate: ptero can't appear below its minSpeed (8.5).
+                var pteroOk = currentSpeed >= Obstacle.types[2].minSpeed;
+                var wP = pteroOk ? gameSettings.pteroPct : 0;
+                var wS = gameSettings.smallCactusPct;
+                var wL = gameSettings.largeCactusPct;
+                var total = wP + wS + wL;
+                var idx;
                 if (total === 0) {
-                    // Edge case: every type is blocked — fall back to a random cactus
-                    obstacleTypeIndex = getRandomNum(0, 1);
+                    // 100% birds but speed too low yet — spawn random cactus
+                    idx = getRandomNum(0, 1);
                 } else {
                     var roll = getRandomNum(0, total - 1);
-                    if (roll < wPtero) {
-                        obstacleTypeIndex = 2; // PTERODACTYL
-                    } else if (roll < wPtero + wSmall) {
-                        obstacleTypeIndex = 0; // CACTUS_SMALL
-                    } else {
-                        obstacleTypeIndex = 1; // CACTUS_LARGE
-                    }
+                    idx = roll < wP ? 2 : (roll < wP + wS ? 0 : 1);
                 }
-            } else {
-                obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
-            }
-            var obstacleType = Obstacle.types[obstacleTypeIndex];
-
-            // Only recurse for the duplicate cap (bounded — history has max 2 entries).
-            // minSpeed is already handled above in custom mode.
-            if (this.duplicateObstacleCheck(obstacleType.type) ||
-                currentSpeed < obstacleType.minSpeed) {
-                this.addNewObstacle(currentSpeed);
-            } else {
-                var obstacleSpritePos = this.spritePos[obstacleType.type];
-
+                obstacleType = Obstacle.types[idx];
+                obstacleSpritePos = this.spritePos[obstacleType.type];
                 this.obstacles.push(new Obstacle(this.canvasCtx, obstacleType,
                     obstacleSpritePos, this.dimensions,
                     this.gapCoefficient, currentSpeed, obstacleType.width));
-
                 this.obstacleHistory.unshift(obstacleType.type);
-
                 if (this.obstacleHistory.length > 1) {
                     this.obstacleHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
+                }
+            } else {
+                // Default Chrome behaviour: equal random, duplicate cap, minSpeed.
+                var obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
+                obstacleType = Obstacle.types[obstacleTypeIndex];
+                if (this.duplicateObstacleCheck(obstacleType.type) ||
+                    currentSpeed < obstacleType.minSpeed) {
+                    this.addNewObstacle(currentSpeed);
+                } else {
+                    obstacleSpritePos = this.spritePos[obstacleType.type];
+                    this.obstacles.push(new Obstacle(this.canvasCtx, obstacleType,
+                        obstacleSpritePos, this.dimensions,
+                        this.gapCoefficient, currentSpeed, obstacleType.width));
+                    this.obstacleHistory.unshift(obstacleType.type);
+                    if (this.obstacleHistory.length > 1) {
+                        this.obstacleHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
+                    }
                 }
             }
         },
