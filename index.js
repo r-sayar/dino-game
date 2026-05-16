@@ -6,13 +6,48 @@
     'use strict';
 
     // Game settings (default = standard Chrome dino behaviour)
-    var gameSettings = {
+    var DEFAULT_SETTINGS = {
         useCustom: false,
         speed: 6,
         pteroPct: 33,
         smallCactusPct: 34,
         largeCactusPct: 33
     };
+    var SETTINGS_KEY = 'dinoGameSettings_v1';
+    var gameSettings = loadSettings();
+
+    function loadSettings() {
+        try {
+            var raw = localStorage.getItem(SETTINGS_KEY);
+            if (!raw) return Object.assign({}, DEFAULT_SETTINGS);
+            var parsed = JSON.parse(raw);
+            // Validate every field — drop malformed data
+            var s = Object.assign({}, DEFAULT_SETTINGS);
+            if (typeof parsed.useCustom === 'boolean') s.useCustom = parsed.useCustom;
+            if (typeof parsed.speed === 'number' && parsed.speed >= 4 && parsed.speed <= 13) {
+                s.speed = parsed.speed;
+            }
+            if (typeof parsed.pteroPct === 'number' && parsed.pteroPct >= 0 && parsed.pteroPct <= 100) {
+                s.pteroPct = parsed.pteroPct;
+            }
+            if (typeof parsed.smallCactusPct === 'number' && parsed.smallCactusPct >= 0 && parsed.smallCactusPct <= 100) {
+                s.smallCactusPct = parsed.smallCactusPct;
+            }
+            // Recompute large to ensure it sums to 100
+            s.largeCactusPct = Math.max(0, 100 - s.pteroPct - s.smallCactusPct);
+            return s;
+        } catch (e) {
+            return Object.assign({}, DEFAULT_SETTINGS);
+        }
+    }
+
+    function persistSettings() {
+        try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(gameSettings));
+        } catch (e) {
+            // localStorage unavailable (private mode, etc.) — fail silently
+        }
+    }
 
     function openSettings() {
         var modal = document.getElementById('settings-modal');
@@ -90,11 +125,12 @@
             gameSettings.largeCactusPct = Math.max(0, large);
         } else {
             // Restore defaults
-            gameSettings.speed = 6;
-            gameSettings.pteroPct = 33;
-            gameSettings.smallCactusPct = 34;
-            gameSettings.largeCactusPct = 33;
+            gameSettings.speed = DEFAULT_SETTINGS.speed;
+            gameSettings.pteroPct = DEFAULT_SETTINGS.pteroPct;
+            gameSettings.smallCactusPct = DEFAULT_SETTINGS.smallCactusPct;
+            gameSettings.largeCactusPct = DEFAULT_SETTINGS.largeCactusPct;
         }
+        persistSettings();
         closeSettings();
     }
 
@@ -932,7 +968,14 @@
                 this.playing = true;
                 this.crashed = false;
                 this.distanceRan = 0;
-                this.setSpeed(gameSettings.useCustom ? gameSettings.speed : this.config.SPEED);
+                if (gameSettings.useCustom) {
+                    // Direct assignment matches startGame's path. setSpeed scales
+                    // down on mobile (width < 600) which would push the speed below
+                    // pterodactyl's 8.5 minSpeed and break custom obstacle spawning.
+                    this.currentSpeed = gameSettings.speed;
+                } else {
+                    this.setSpeed(this.config.SPEED);
+                }
                 this.time = getTimeStamp();
                 this.containerEl.classList.remove(Runner.classes.CRASHED);
                 this.clearCanvas();
@@ -2846,6 +2889,7 @@
          */
         reset: function () {
             this.obstacles = [];
+            this.obstacleHistory = [];
             this.horizonLine.reset();
             this.nightMode.reset();
         },
