@@ -65,9 +65,11 @@
         var fill = document.getElementById('large-bar-fill');
         if (fill) fill.style.width = large + '%';
 
-        // Warning if total > 100 (shouldn't happen with clamping, but guard)
-        var warning = document.getElementById('pct-warning');
-        if (warning) warning.style.display = large < 0 ? 'block' : 'none';
+        // Show speed warning when birds are wanted but speed is too low
+        var speedWarning = document.getElementById('speed-warning');
+        if (speedWarning) {
+            speedWarning.style.display = (ptero > 0 && speed < 8.5) ? 'block' : 'none';
+        }
     }
 
     function onModeChange(mode) {
@@ -2776,39 +2778,49 @@
          * @param {number} currentSpeed
          */
         addNewObstacle: function (currentSpeed) {
-            var obstacleTypeIndex;
+            var obstacleType, obstacleSpritePos;
+
             if (gameSettings.useCustom) {
-                var roll = getRandomNum(0, 99);
-                var pteroCutoff = gameSettings.pteroPct;
-                var smallCutoff = pteroCutoff + gameSettings.smallCactusPct;
-                if (roll < pteroCutoff) {
-                    obstacleTypeIndex = 2; // PTERODACTYL
-                } else if (roll < smallCutoff) {
-                    obstacleTypeIndex = 0; // CACTUS_SMALL
+                // Custom mode: pick by weighted percentage, no duplicate cap.
+                // Only gate: ptero can't appear below its minSpeed (8.5).
+                var pteroOk = currentSpeed >= Obstacle.types[2].minSpeed;
+                var wP = pteroOk ? gameSettings.pteroPct : 0;
+                var wS = gameSettings.smallCactusPct;
+                var wL = gameSettings.largeCactusPct;
+                var total = wP + wS + wL;
+                var idx;
+                if (total === 0) {
+                    // 100% birds but speed too low yet — spawn random cactus
+                    idx = getRandomNum(0, 1);
                 } else {
-                    obstacleTypeIndex = 1; // CACTUS_LARGE
+                    var roll = getRandomNum(0, total - 1);
+                    idx = roll < wP ? 2 : (roll < wP + wS ? 0 : 1);
                 }
-            } else {
-                obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
-            }
-            var obstacleType = Obstacle.types[obstacleTypeIndex];
-
-            // Check for multiples of the same type of obstacle.
-            // Also check obstacle is available at current speed.
-            if (this.duplicateObstacleCheck(obstacleType.type) ||
-                currentSpeed < obstacleType.minSpeed) {
-                this.addNewObstacle(currentSpeed);
-            } else {
-                var obstacleSpritePos = this.spritePos[obstacleType.type];
-
+                obstacleType = Obstacle.types[idx];
+                obstacleSpritePos = this.spritePos[obstacleType.type];
                 this.obstacles.push(new Obstacle(this.canvasCtx, obstacleType,
                     obstacleSpritePos, this.dimensions,
                     this.gapCoefficient, currentSpeed, obstacleType.width));
-
                 this.obstacleHistory.unshift(obstacleType.type);
-
                 if (this.obstacleHistory.length > 1) {
                     this.obstacleHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
+                }
+            } else {
+                // Default Chrome behaviour: equal random, duplicate cap, minSpeed.
+                var obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
+                obstacleType = Obstacle.types[obstacleTypeIndex];
+                if (this.duplicateObstacleCheck(obstacleType.type) ||
+                    currentSpeed < obstacleType.minSpeed) {
+                    this.addNewObstacle(currentSpeed);
+                } else {
+                    obstacleSpritePos = this.spritePos[obstacleType.type];
+                    this.obstacles.push(new Obstacle(this.canvasCtx, obstacleType,
+                        obstacleSpritePos, this.dimensions,
+                        this.gapCoefficient, currentSpeed, obstacleType.width));
+                    this.obstacleHistory.unshift(obstacleType.type);
+                    if (this.obstacleHistory.length > 1) {
+                        this.obstacleHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
+                    }
                 }
             }
         },
